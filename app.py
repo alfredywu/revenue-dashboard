@@ -38,8 +38,7 @@ def check_password():
 # Main function to run the app
 def main():
     if check_password():
-        st.title("Welcome to the Streamlit App")
-        st.write("You are successfully logged in.")
+        st.title("Revenue Project")
 
         # Load the Actual and Budget data from the provided CSV files
         actual_data = pd.read_csv("./Actual.csv")
