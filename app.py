@@ -43,7 +43,7 @@ def main():
 
         # Load the Actual and Budget data from the provided CSV files
         actual_data = pd.read_csv("./Actual.csv")
-        budget_data = pd.read_csv"./Budget.csv")
+        budget_data = pd.read_csv("./Budget.csv")
 
         # Convert date columns to datetime
         actual_data['Last Discharge Port Depart'] = pd.to_datetime(actual_data['Last Discharge Port Depart'])
