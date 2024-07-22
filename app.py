@@ -226,7 +226,7 @@ def main():
 
 
         # Merge the actual and budget summaries
-        summary = pd.merge(summary_actual, summary_budget, on=['Type', 'Vessel'], how='outer',
+        summary = pd.merge(summary_actual, summary_budget, on=['Vessel'], how='outer',
                            suffixes=(' (Actual)', ' (Budget)'))
         summary['Variance'] = summary['Recognized Revenue (Actual)'] - summary['Recognized Revenue (Budget)']
 
