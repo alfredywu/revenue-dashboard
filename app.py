@@ -51,7 +51,6 @@ def main():
         budget_data['Discharge Port Depart'] = pd.to_datetime(budget_data['Discharge Port Depart'])
 
         # Streamlit app
-        st.title('Actual vs Budget Data Analysis')
 
         # Date selectors
         start_date = st.date_input('Start Date', value=datetime(2024, 1, 1))
@@ -138,11 +137,11 @@ def main():
         st.subheader('Summarized Results by Vessel')
         st.write(summary)
         # Display the filtered and computed data
-        st.subheader('Filtered and Computed Actual Data')
+        st.subheader('Actual')
         st.write(filtered_actual_data[
                      ['Vessel', 'Trip No', 'Start Date', 'End Date', 'Recognized Time', 'Trip Details', 'Total Load Quantity', 'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
 
-        st.subheader('Filtered and Computed Budget Data')
+        st.subheader('Budget')
         st.write(filtered_budget_data[
                      ['Vessel', 'Trip No', 'Start Date', 'End Date', 'Recognized Time', 'Trip Details', 'Total Load Quantity', 'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
 
