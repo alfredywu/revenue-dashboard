@@ -11,10 +11,12 @@ USERS = {
     # Add more users as needed
 }
 
+
 # Function to check if the username and password are correct
 def check_password():
     def password_entered():
-        if st.session_state["username"] in USERS and st.session_state["password"] == USERS[st.session_state["username"]]:
+        if st.session_state["username"] in USERS and st.session_state["password"] == USERS[
+            st.session_state["username"]]:
             st.session_state["authenticated"] = True
             del st.session_state["username"]
             del st.session_state["password"]
@@ -35,15 +37,15 @@ def check_password():
     else:
         return True
 
+
 # Main function to run the app
 def main():
     if check_password():
-        st.title("Welcome to the Streamlit App")
-        st.write("You are successfully logged in.")
+        st.title("Revenue Project")
 
         # Load the Actual and Budget data from the provided CSV files
-        actual_data = pd.read_csv(r"C:\Users\ywu\Downloads\RevenueReporting\Actual.csv")
-        budget_data = pd.read_csv(r"C:\Users\ywu\Downloads\RevenueReporting\Budget.csv")
+        actual_data = pd.read_csv("./Actual.csv")
+        budget_data = pd.read_csv("./Budget.csv")
 
         # Convert date columns to datetime
         actual_data['Last Discharge Port Depart'] = pd.to_datetime(actual_data['Last Discharge Port Depart'])
@@ -52,12 +54,16 @@ def main():
         budget_data['Discharge Port Depart'] = pd.to_datetime(budget_data['Discharge Port Depart'])
 
         # Streamlit app
-        st.title('Actual vs Budget Data Analysis')
 
-        # Date selectors
-        start_date = st.date_input('Start Date', value=datetime(2024, 1, 1))
-        end_date = st.date_input('End Date', value=datetime(2024, 12, 31))
+        # Create two columns
+        col1, col2 = st.columns(2)
 
+        # Place the date input elements in the columns
+        with col1:
+            start_date = st.date_input('Start Date', value=datetime(2024, 1, 1))
+
+        with col2:
+            end_date = st.date_input('End Date', value=datetime(2024, 12, 31))
         # Convert Streamlit date inputs to datetime
         start_date = pd.to_datetime(start_date)
         end_date = pd.to_datetime(end_date)
@@ -97,7 +103,9 @@ def main():
             data['Total Time'] = data['Total Time'].astype(float)
             data['Total Revenue'] = data['Total Revenue'].astype(float)
             data['Recognized Revenue'] = data.apply(
-                lambda row: row['Total Revenue'] * (row['Recognized Time'] / row['Total Time']) if row['Total Time'] != 0 else 0, axis=1)
+                lambda row: row['Total Revenue'] * (row['Recognized Time'] / row['Total Time']) if row[
+                                                                                                       'Total Time'] != 0 else 0,
+                axis=1)
             data['Recognized Revenue'] = data['Recognized Revenue'].round(2)
             data['Recognized Time'] = data['Recognized Time'].round(2)
             data['Total Revenue'] = data['Total Revenue'].round(2)
@@ -107,16 +115,36 @@ def main():
 
         # Filter and compute time and actual revenue for Actual and Budget data
         filtered_actual_data = filter_and_compute_time(actual_data)
-        filtered_actual_data = filtered_actual_data.rename(columns={'Discharge Port Depart': 'End Date', 'Last Discharge Port Depart': 'Start Date', 'Total Time': 'Total Trip Time'})
+        filtered_actual_data = filtered_actual_data.rename(
+            columns={'Discharge Port Depart': 'End Date', 'Last Discharge Port Depart': 'Start Date',
+                     'Total Time': 'Total Trip Time'})
         filtered_budget_data = filter_and_compute_time(budget_data)
-        filtered_budget_data = filtered_budget_data.rename(columns={'Discharge Port Depart': 'End Date', 'Last Discharge Port Depart': 'Start Date', 'Total Time': 'Total Trip Time'})
+        filtered_budget_data = filtered_budget_data.rename(
+            columns={'Discharge Port Depart': 'End Date', 'Last Discharge Port Depart': 'Start Date',
+                     'Total Time': 'Total Trip Time'})
+
+        # Create filters for Vessel and Trip No
+        st.subheader("Filters")
+        vessel_options = sorted(filtered_actual_data['Vessel'].unique())
+        selected_vessels = st.multiselect('Select Vessels', vessel_options, default=vessel_options)
+
+        trip_no_options = sorted(filtered_actual_data['Trip No'].unique())
+
+        # Apply filters
+        filtered_actual_data = filtered_actual_data[
+            (filtered_actual_data['Vessel'].isin(selected_vessels))
+            ]
+        filtered_budget_data = filtered_budget_data[
+            (filtered_budget_data['Vessel'].isin(selected_vessels))
+            ]
 
         # Group by Vessel and calculate the total actual and budget revenue
         summary_actual = filtered_actual_data.groupby('Vessel').agg({'Recognized Revenue': 'sum'}).reset_index()
         summary_budget = filtered_budget_data.groupby('Vessel').agg({'Recognized Revenue': 'sum'}).reset_index()
 
         # Merge the actual and budget summaries
-        summary = pd.merge(summary_actual, summary_budget, on='Vessel', how='outer', suffixes=(' (Actual)', ' (Budget)'))
+        summary = pd.merge(summary_actual, summary_budget, on='Vessel', how='outer',
+                           suffixes=(' (Actual)', ' (Budget)'))
         summary['Variance'] = summary['Recognized Revenue (Actual)'] - summary['Recognized Revenue (Budget)']
 
         # Calculate the totals
@@ -139,15 +167,18 @@ def main():
         st.subheader('Summarized Results by Vessel')
         st.write(summary)
         # Display the filtered and computed data
-        st.subheader('Filtered and Computed Actual Data')
+        st.subheader('Actual')
         st.write(filtered_actual_data[
-                     ['Vessel', 'Trip No', 'Start Date', 'End Date', 'Recognized Time', 'Trip Details', 'Total Load Quantity', 'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
+                     ['Vessel', 'Trip No', 'Start Date', 'End Date', 'Recognized Time', 'Trip Details',
+                      'Total Load Quantity', 'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
 
-        st.subheader('Filtered and Computed Budget Data')
+        st.subheader('Budget')
         st.write(filtered_budget_data[
-                     ['Vessel', 'Trip No', 'Start Date', 'End Date', 'Recognized Time', 'Trip Details', 'Total Load Quantity', 'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
+                     ['Vessel', 'Trip No', 'Start Date', 'End Date', 'Recognized Time', 'Trip Details',
+                      'Total Load Quantity', 'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
 
         # Add any additional analysis or visualizations here
+
 
 if __name__ == "__main__":
     main()
