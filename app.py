@@ -52,10 +52,15 @@ def main():
 
         # Streamlit app
 
-        # Date selectors
-        start_date = st.date_input('Start Date', value=datetime(2024, 1, 1))
-        end_date = st.date_input('End Date', value=datetime(2024, 12, 31))
-
+        # Create two columns
+        col1, col2 = st.columns(2)
+        
+        # Place the date input elements in the columns
+        with col1:
+            start_date = st.date_input('Start Date', value=datetime(2024, 1, 1))
+        
+        with col2:
+            end_date = st.date_input('End Date', value=datetime(2024, 12, 31))
         # Convert Streamlit date inputs to datetime
         start_date = pd.to_datetime(start_date)
         end_date = pd.to_datetime(end_date)
