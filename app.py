@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode
 
 # Define your usernames and passwords
 USERS = {
@@ -11,10 +12,12 @@ USERS = {
     # Add more users as needed
 }
 
+
 # Function to check if the username and password are correct
 def check_password():
     def password_entered():
-        if st.session_state["username"] in USERS and st.session_state["password"] == USERS[st.session_state["username"]]:
+        if st.session_state["username"] in USERS and st.session_state["password"] == USERS[
+            st.session_state["username"]]:
             st.session_state["authenticated"] = True
             del st.session_state["username"]
             del st.session_state["password"]
@@ -35,6 +38,7 @@ def check_password():
     else:
         return True
 
+
 # Main function to run the app
 def main():
     if check_password():
@@ -54,11 +58,11 @@ def main():
 
         # Create two columns
         col1, col2 = st.columns(2)
-        
+
         # Place the date input elements in the columns
         with col1:
             start_date = st.date_input('Start Date', value=datetime(2024, 1, 1))
-        
+
         with col2:
             end_date = st.date_input('End Date', value=datetime(2024, 12, 31))
         # Convert Streamlit date inputs to datetime
@@ -100,7 +104,9 @@ def main():
             data['Total Time'] = data['Total Time'].astype(float)
             data['Total Revenue'] = data['Total Revenue'].astype(float)
             data['Recognized Revenue'] = data.apply(
-                lambda row: row['Total Revenue'] * (row['Recognized Time'] / row['Total Time']) if row['Total Time'] != 0 else 0, axis=1)
+                lambda row: row['Total Revenue'] * (row['Recognized Time'] / row['Total Time']) if row[
+                                                                                                       'Total Time'] != 0 else 0,
+                axis=1)
             data['Recognized Revenue'] = data['Recognized Revenue'].round(2)
             data['Recognized Time'] = data['Recognized Time'].round(2)
             data['Total Revenue'] = data['Total Revenue'].round(2)
@@ -110,16 +116,21 @@ def main():
 
         # Filter and compute time and actual revenue for Actual and Budget data
         filtered_actual_data = filter_and_compute_time(actual_data)
-        filtered_actual_data = filtered_actual_data.rename(columns={'Discharge Port Depart': 'End Date', 'Last Discharge Port Depart': 'Start Date', 'Total Time': 'Total Trip Time'})
+        filtered_actual_data = filtered_actual_data.rename(
+            columns={'Discharge Port Depart': 'End Date', 'Last Discharge Port Depart': 'Start Date',
+                     'Total Time': 'Total Trip Time'})
         filtered_budget_data = filter_and_compute_time(budget_data)
-        filtered_budget_data = filtered_budget_data.rename(columns={'Discharge Port Depart': 'End Date', 'Last Discharge Port Depart': 'Start Date', 'Total Time': 'Total Trip Time'})
+        filtered_budget_data = filtered_budget_data.rename(
+            columns={'Discharge Port Depart': 'End Date', 'Last Discharge Port Depart': 'Start Date',
+                     'Total Time': 'Total Trip Time'})
 
         # Group by Vessel and calculate the total actual and budget revenue
         summary_actual = filtered_actual_data.groupby('Vessel').agg({'Recognized Revenue': 'sum'}).reset_index()
         summary_budget = filtered_budget_data.groupby('Vessel').agg({'Recognized Revenue': 'sum'}).reset_index()
 
         # Merge the actual and budget summaries
-        summary = pd.merge(summary_actual, summary_budget, on='Vessel', how='outer', suffixes=(' (Actual)', ' (Budget)'))
+        summary = pd.merge(summary_actual, summary_budget, on='Vessel', how='outer',
+                           suffixes=(' (Actual)', ' (Budget)'))
         summary['Variance'] = summary['Recognized Revenue (Actual)'] - summary['Recognized Revenue (Budget)']
 
         # Calculate the totals
@@ -141,16 +152,28 @@ def main():
         # Display the summarized results
         st.subheader('Summarized Results by Vessel')
         st.write(summary)
-        # Display the filtered and computed data
+
+        # Display the filtered and computed data using AgGrid for interactive filtering
         st.subheader('Actual')
-        st.write(filtered_actual_data[
-                     ['Vessel', 'Trip No', 'Start Date', 'End Date', 'Recognized Time', 'Trip Details', 'Total Load Quantity', 'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
+        gb_actual = GridOptionsBuilder.from_dataframe(filtered_actual_data[
+                                                          ['Vessel', 'Trip No', 'Start Date', 'End Date',
+                                                           'Recognized Time', 'Trip Details', 'Total Load Quantity',
+                                                           'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
+        gb_actual.configure_default_column(filterable=True)
+        grid_options_actual = gb_actual.build()
+        AgGrid(filtered_actual_data, gridOptions=grid_options_actual, update_mode=GridUpdateMode.MODEL_CHANGED,
+               data_return_mode=DataReturnMode.FILTERED)
 
         st.subheader('Budget')
-        st.write(filtered_budget_data[
-                     ['Vessel', 'Trip No', 'Start Date', 'End Date', 'Recognized Time', 'Trip Details', 'Total Load Quantity', 'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
+        gb_budget = GridOptionsBuilder.from_dataframe(filtered_budget_data[
+                                                          ['Vessel', 'Trip No', 'Start Date', 'End Date',
+                                                           'Recognized Time', 'Trip Details', 'Total Load Quantity',
+                                                           'Total Trip Time', 'Recognized Revenue', 'Total Revenue']])
+        gb_budget.configure_default_column(filterable=True)
+        grid_options_budget = gb_budget.build()
+        AgGrid(filtered_budget_data, gridOptions=grid_options_budget, update_mode=GridUpdateMode.MODEL_CHANGED,
+               data_return_mode=DataReturnMode.FILTERED)
 
-        # Add any additional analysis or visualizations here
 
 if __name__ == "__main__":
     main()
