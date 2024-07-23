@@ -197,16 +197,14 @@ def main():
             start_day = pd.to_datetime(row['Start Day'], format='%Y-%m-%d %H:%M:%S')
             end_day = pd.to_datetime(row['End Day'], format='%Y-%m-%d %H:%M:%S')
             temp_df = daily_revenue(actual_data, start_day, end_day)
-            print(temp_df)
             summary = temp_df['Recognized Revenue'].sum()
             actual_daily_df.at[index, 'Recognized Daily Revenue'] = summary
         for index, row in budget_daily_df.iterrows():
             start_day = pd.to_datetime(row['Start Day'], format='%Y-%m-%d')
             end_day = pd.to_datetime(row['End Day'], format='%Y-%m-%d')
             temp_df = daily_revenue(budget_data, start_day, end_day)
-            summary = temp_df.groupby(['Type']).agg(
-                {'Recognized Revenue': 'sum'}).reset_index()
-            budget_daily_df.at[index, 'Recognized Daily Revenue'] = sum(summary['Recognized Revenue'])
+            summary = temp_df['Recognized Revenue'].sum()
+            budget_daily_df.at[index, 'Recognized Daily Revenue'] = summary
 
         summary = pd.merge(actual_daily_df, budget_daily_df, on=['Start Day', 'End Day'], how='inner',
                            suffixes=(' (Actual)', ' (Budget)'))
